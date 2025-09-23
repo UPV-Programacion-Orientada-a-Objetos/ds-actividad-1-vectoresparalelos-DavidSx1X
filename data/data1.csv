@@ -1,21 +1,21 @@
-nombre,pais,disciplina,genero,Medallas
-Usain Bolt,Jamaica,Atletismo,M,10
-Florence Griffith-Joyner,Estados Unidos,Atletismo,F,2
-Michael Phelps,Estados Unidos,Natacion,F,9
-Katie Ledecky,Estados Unidos,Natacion,F,12
-Hicham El Guerrouj,Marruecos,Atletismo,M,1
-Kenenisa Bekele,Etiopia,Atletismo,M,4
-Eliud Kipchoge,Kenia,Atletismo,M,8
-Tirunesh Dibaba,Etiopia,Atletismo,F,0
-Paula Radcliffe,Reino Unido,Atletismo,F,12
-Haile Gebrselassie,Etiopia,Atletismo,M,5
-David Rudisha,Kenia,Atletismo,M,11
-Mo Farah,Reino Unido,Atletismo,M,12
-Asafa Powell,Jamaica,Atletismo,M,10
-Yohan Blake,Jamaica,Atletismo,M,12
-Justin Gatlin,Estados Unidos,Atletismo,M,10
-Allyson Felix,Estados Unidos,Atletismo,F,12
-Shelly-Ann Fraser-Pryce,Jamaica,Atletismo,F,7
-Sha'Carri Richardson,Estados Unidos,Atletismo,F,6
-Caster Semenya,Sudafrica,Atletismo,F,3
-Sifan Hassan,Paises Bajos,Atletismo,F,11
+Nombre,Pais,Disciplina,Genero,Medallas
+Pablo,México,Salto triple,M,2
+Juan,EEUU,Marcha,M,1
+Luisa,Canadá,Salto de Altura,F,5
+Marta,España,100m,F,3
+Usain Bolt,Jamaica,100m,M,8
+Allyson Felix,EEUU,400m,F,6
+Mo Farah,Reino Unido,5000m,M,4
+Simone Biles,EEUU,Gimnasia,F,7
+Paola Espinosa,México,Clavados,F,1
+Michael Phelps,EEUU,Natación,M,23
+Katie Ledecky,EEUU,Natación,F,10
+Ana Guevara,México,400m,F,0
+Serena Williams,EEUU,Tenis,F,4
+Rafael Nadal,España,Tenis,M,2
+Novak Djokovic,Serbia,Tenis,M,1
+Roger Federer,Suiza,Tenis,M,1
+#LineaInvalida,PorCamposInsuficientes
+Florence Griffith,EEUU,200m,F,5
+Carl Lewis,EEUU,100m,M,9
+Alberto Juantorena,Cuba,800m,M,2
