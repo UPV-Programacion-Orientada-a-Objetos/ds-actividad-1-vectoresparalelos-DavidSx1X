@@ -1,21 +1,30 @@
 Nombre,Pais,Disciplina,Genero,Medallas
 Pablo,México,Salto triple,M,2
 Juan,EEUU,Marcha,M,1
-Luisa,Canadá,Salto de Altura,F,5
+Luisa,Canada,Salto de Altura,F,5
 Marta,España,100m,F,3
 Usain Bolt,Jamaica,100m,M,8
-Allyson Felix,EEUU,400m,F,6
-Mo Farah,Reino Unido,5000m,M,4
-Simone Biles,EEUU,Gimnasia,F,7
-Paola Espinosa,México,Clavados,F,1
-Michael Phelps,EEUU,Natación,M,23
-Katie Ledecky,EEUU,Natación,F,10
-Ana Guevara,México,400m,F,0
-Serena Williams,EEUU,Tenis,F,4
-Rafael Nadal,España,Tenis,M,2
-Novak Djokovic,Serbia,Tenis,M,1
-Roger Federer,Suiza,Tenis,M,1
-#LineaInvalida,PorCamposInsuficientes
-Florence Griffith,EEUU,200m,F,5
-Carl Lewis,EEUU,100m,M,9
-Alberto Juantorena,Cuba,800m,M,2
+Ana,México,200m,F,4
+Carlos,Argentina,400m,M,2
+Sofia,Colombia,Maratón,F,1
+Diego,Brasil,Salto Largo,M,3
+Maria,Perú,800m,F,2
+Luis,Chile,110m vallas,M,1
+Elena,Rusia,400m vallas,F,6
+Igor,Ucrania,Decatlón,M,4
+Nina,Australia,1500m,F,2
+Tom,Reino Unido,3000m obstáculos,M,3
+Emma,Nueva Zelanda,Heptatlón,F,5
+Jack,Irlanda,Triple Salto,M,2
+Laura,Italia,5000m,F,4
+Marco,Alemania,200m vallas,M,1
+Eva,Francia,Maratón,F,3
+Peter,Holanda,100m,M,2
+Clara,Bélgica,400m,F,1
+Hans,Suiza,Salto con pértiga,M,4
+Sofia,Grecia,100m vallas,F,2
+Nikos,Croacia,Decatlón,M,3
+Irene,Portugal,1500m,F,5
+Viktor,Hungría,800m,M,1
+Mia,Noruega,Heptatlón,F,4
+Oskar,Polonia,3000m obstáculos,M,2

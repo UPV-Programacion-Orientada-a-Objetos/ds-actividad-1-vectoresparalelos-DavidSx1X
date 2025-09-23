@@ -1,180 +1,250 @@
-#include <bits/stdc++.h>
+// ======================= Actividad - Vectores Paralelos =======================
+// Problema 1: Registro de Atletas Olímpicos (arreglos estáticos paralelos)
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <cctype>
+#include <cstdlib>
+
 using namespace std;
 
-static inline string trim(string s) {
-    auto l = s.find_first_not_of(" \t\r\n");
-    auto r = s.find_last_not_of(" \t\r\n");
-    if (l == string::npos) return "";
-    return s.substr(l, r - l + 1);
-}
-
-struct Data {
-    unique_ptr<string[]> nombres;
-    unique_ptr<string[]> paises;
-    unique_ptr<string[]> disciplinas;
-    unique_ptr<string[]> generos;
-    unique_ptr<int[]>    oros;
-    size_t n = 0;
+// ------------------------------ Datos (paralelos) ------------------------------
+struct DB {
+    static const int MAX = 1000;      // capacidad fija requerida
+    string nombres[MAX];
+    string paises[MAX];
+    string disciplinas[MAX];
+    char   generos[MAX];              // 'M' o 'F' (o '?')
+    int    oros[MAX];                 // medallas de oro
+    int    n = 0;                     // registros válidos cargados
 };
 
-static bool splitCSVLine(const string& line, array<string,5>& out) {
-    vector<string> parts;
-    string cur;
-    for (char c : line) {
-        if (c == ',') { parts.push_back(cur); cur.clear(); }
-        else          { cur.push_back(c); }
-    }
-    parts.push_back(cur);
-    if (parts.size() != 5) return false;
-    for (int i = 0; i < 5; ++i) out[i] = trim(parts[i]);
+// ------------------------------ Utilidades ------------------------------------
+static inline string trim(const string& s) {
+    size_t i = 0, j = s.size();
+    while (i < j && isspace((unsigned char)s[i])) i++;
+    while (j > i && isspace((unsigned char)s[j - 1])) j--;
+    return s.substr(i, j - i);
+}
+
+static inline bool esNumero(const string& s) {
+    if (s.empty()) return false;
+    for (char c : s) if (!isdigit((unsigned char)c)) return false;
     return true;
 }
 
-static size_t contarRegistrosValidos(const string& path) {
-    ifstream in(path);
-    if (!in) return 0;
-    string line; size_t cnt = 0;
-    while (getline(in, line)) {
-        if (trim(line).empty()) continue;
-        array<string,5> f;
-        if (!splitCSVLine(line, f)) continue;
-        if (f[0].empty() || f[1].empty() || f[2].empty() || f[3].empty() || f[4].empty()) continue;
-        try {
-            size_t idx=0; int m = stoi(f[4], &idx);
-            if (idx != f[4].size() || m < 0) continue;
-        } catch (...) { continue; }
-        cnt++;
+// Divide una línea CSV simple en exactamente 5 campos
+static bool split5(const string& line, string& a, string& b, string& c, string& d, string& e) {
+    a=b=c=d=e="";
+    int comas = 0; string cur;
+    for (char ch : line) {
+        if (ch == ',') {
+            if      (comas == 0) a = trim(cur);
+            else if (comas == 1) b = trim(cur);
+            else if (comas == 2) c = trim(cur);
+            else if (comas == 3) d = trim(cur);
+            else return false; // más de 4 comas
+            cur.clear();
+            comas++;
+        } else {
+            cur.push_back(ch);
+        }
     }
-    return cnt;
+    e = trim(cur);
+    return comas == 4;
 }
 
-static bool cargarCSV(const string& path, Data& d, vector<string>& warnings) {
-    size_t n = contarRegistrosValidos(path);
-    if (n == 0) { warnings.push_back("No hay registros válidos."); return false; }
-
-    d.nombres     = make_unique<string[]>(n);
-    d.paises      = make_unique<string[]>(n);
-    d.disciplinas = make_unique<string[]>(n);
-    d.generos     = make_unique<string[]>(n);
-    d.oros        = make_unique<int[]>(n);
-
-    ifstream in(path);
-    if (!in) { warnings.push_back("No se pudo abrir el archivo."); return false; }
-
-    string line; size_t i = 0; size_t lineNo = 0;
-    while (getline(in, line)) {
-        lineNo++;
-        if (trim(line).empty()) continue;
-        array<string,5> f;
-        if (!splitCSVLine(line, f)) { warnings.push_back("Linea " + to_string(lineNo) + ": 5 campos requeridos."); continue; }
-        if (f[0].empty() || f[1].empty() || f[2].empty() || f[3].empty() || f[4].empty()) { warnings.push_back("Linea " + to_string(lineNo) + ": campo vacío."); continue; }
-        int med; try {
-            size_t idx=0; med = stoi(f[4], &idx);
-            if (idx != f[4].size() || med < 0) { warnings.push_back("Linea " + to_string(lineNo) + ": medallas no válidas."); continue; }
-        } catch (...) { warnings.push_back("Linea " + to_string(lineNo) + ": medallas no numéricas."); continue; }
-
-        d.nombres[i]     = f[0];
-        d.paises[i]      = f[1];
-        d.disciplinas[i] = f[2];
-        d.generos[i]     = f[3];
-        d.oros[i]        = med;
-        i++;
-        if (i == n) break;
+// ------------------------------ Carga de CSV ----------------------------------
+// Reglas de validación para Problema 1:
+// - 5 campos: nombre, país, disciplina, género (M/F), medallas (oro)
+// - Ignora encabezado si la 1a línea contiene "nombre" y "medalla"
+bool cargarCSV(const string& path, DB& db) {
+    ifstream in(path.c_str());
+    if (!in.is_open()) {
+        cerr << "[ERROR] No se pudo abrir el archivo: " << path << "\n";
+        return false;
     }
-    d.n = i;
-    return d.n > 0;
+
+    string line; int linea = 0;
+    while (getline(in, line)) {
+        linea++;
+        string t = trim(line);
+        if (t.empty()) continue;
+
+        if (linea == 1) {
+            string low = t; for (char& c : low) c = (char)tolower((unsigned char)c);
+            if (low.find("nombre") != string::npos && low.find("medalla") != string::npos) {
+                continue; // encabezado
+            }
+        }
+
+        if (db.n >= DB::MAX) {
+            cerr << "[AVISO] Capacidad maxima (" << DB::MAX << ") alcanzada. Ignorando resto.\n";
+            break;
+        }
+
+        string s0,s1,s2,s3,s4;
+        if (!split5(t, s0,s1,s2,s3,s4)) {
+            cerr << "[AVISO] Linea " << linea << ": formato invalido (5 campos requeridos).\n";
+            continue;
+        }
+        if (!esNumero(s4)) {
+            cerr << "[AVISO] Linea " << linea << ": medallas no numericas.\n";
+            continue;
+        }
+        if (s3.empty()) {
+            cerr << "[AVISO] Linea " << linea << ": genero vacio.\n";
+            continue;
+        }
+
+        char g = (char)toupper((unsigned char)s3[0]);
+        if (g != 'M' && g != 'F') {
+            cerr << "[AVISO] Linea " << linea << ": genero invalido (use M/F).\n";
+            continue;
+        }
+
+        int idx = db.n++;
+        db.nombres[idx]     = s0;
+        db.paises[idx]      = s1;
+        db.disciplinas[idx] = s2;
+        db.generos[idx]     = g;
+        db.oros[idx]        = stoi(s4);
+    }
+
+    if (db.n == 0) {
+        cerr << "[AVISO] No se cargaron registros validos.\n";
+        return false;
+    }
+    return true;
 }
 
-static void imprimirRegistro(const Data& d, size_t i) {
-    cout << "Nombre: " << d.nombres[i]
-         << " | Pais: " << d.paises[i]
-         << " | Disciplina: " << d.disciplinas[i]
-         << " | Genero: " << d.generos[i]
-         << " | Oros: " << d.oros[i] << "\n";
+// ------------------------------ Funciones pedido ------------------------------
+// (2) Buscar atleta por nombre (insensible a mayúsculas/minúsculas)
+void buscarPorNombre(const DB& db, const string& nombre) {
+    string q = nombre; for (char& c : q) c = (char)tolower((unsigned char)c);
+    bool encontrado = false;
+    for (int i = 0; i < db.n; ++i) {
+        string n = db.nombres[i]; for (char& c : n) c = (char)tolower((unsigned char)c);
+        if (n == q) {
+            cout << "Atleta: "      << db.nombres[i]     << "\n"
+                 << "Pais: "        << db.paises[i]      << "\n"
+                 << "Disciplina: "  << db.disciplinas[i] << "\n"
+                 << "Genero: "      << db.generos[i]     << "\n"
+                 << "Medallas ORO: "<< db.oros[i]        << "\n";
+            encontrado = true;
+        }
+    }
+    if (!encontrado) cout << "No se encontro al atleta \"" << nombre << "\".\n";
 }
 
-static vector<size_t> indicesDeNombre(const Data& d, const string& nombre) {
-    vector<size_t> r;
-    for (size_t i = 0; i < d.n; ++i) if (d.nombres[i] == nombre) r.push_back(i);
-    return r;
+// (3) Total de medallas de oro por país (coincidencia exacta)
+int totalOroPorPais(const DB& db, const string& pais) {
+    int suma = 0;
+    for (int i = 0; i < db.n; ++i) if (db.paises[i] == pais) suma += db.oros[i];
+    return suma;
 }
 
-static int totalOrosPais(const Data& d, const string& pais) {
-    long long s = 0;
-    for (size_t i = 0; i < d.n; ++i) if (d.paises[i] == pais) s += d.oros[i];
-    return (int)s;
+// (4) Atleta(s) con más medallas de oro
+void atletasConMasOro(const DB& db) {
+    if (db.n == 0) { cout << "Sin registros.\n"; return; }
+    int mx = db.oros[0];
+    for (int i = 1; i < db.n; ++i) if (db.oros[i] > mx) mx = db.oros[i];
+
+    cout << "Atleta(s) con mas medallas de ORO (" << mx << "):\n";
+    for (int i = 0; i < db.n; ++i) if (db.oros[i] == mx)
+        cout << " - " << db.nombres[i] << " (" << db.paises[i] << ")\n";
 }
 
-static vector<size_t> indicesTopOro(const Data& d) {
-    vector<size_t> r; if (d.n == 0) return r;
-    int mx = d.oros[0];
-    for (size_t i = 1; i < d.n; ++i) mx = max(mx, d.oros[i]);
-    for (size_t i = 0; i < d.n; ++i) if (d.oros[i] == mx) r.push_back(i);
-    return r;
+// ------------------------------ Menú robusto ----------------------------------
+static inline int leerOpcion() {
+    string s;
+    cout << "Opcion: ";
+    if (!getline(cin, s)) return -1;        // EOF/Ctrl+Z
+    s = trim(s);
+    if (s.empty()) return -2;
+    for (char c : s) if (!isdigit((unsigned char)c)) return -2;
+    return (int)strtol(s.c_str(), nullptr, 10);
 }
 
-static void menu(const Data& d) {
+void menu(const DB& db) {
     while (true) {
         cout << "\n=== Menu ===\n"
              << "1) Buscar atleta por nombre\n"
-             << "2) Total de medallas de oro por pais\n"
-             << "3) Atleta(s) con mas medallas de oro\n"
+             << "2) Total de medallas de ORO por pais\n"
+             << "3) Atleta(s) con mas medallas de ORO\n"
              << "4) Listar todos\n"
-             << "0) Salir\n"
-             << "Opcion: ";
-        string op; if (!getline(cin, op)) return;
-        op = trim(op);
-        if (op == "0") return;
-        else if (op == "1") {
+             << "0) Salir\n";
+
+        int op = leerOpcion();
+        if (op == -1) { cout << "Saliendo...\n"; return; }
+        if (op == -2) { cout << "Opcion invalida.\n"; continue; }
+
+        if (op == 0) {
+            cout << "Saliendo...\n"; return;
+        } else if (op == 1) {
             cout << "Nombre exacto: ";
-            string nombre; getline(cin, nombre); nombre = trim(nombre);
-            if (nombre.empty()) { cout << "Nombre vacío.\n"; continue; }
-            auto idxs = indicesDeNombre(d, nombre);
-            if (idxs.empty()) cout << "No se encontró.\n";
-            else for (auto i : idxs) imprimirRegistro(d, i);
-        } else if (op == "2") {
+            string nombre; if (!getline(cin, nombre)) return;
+            nombre = trim(nombre);
+            if (nombre.empty()) { cout << "Nombre vacio.\n"; continue; }
+            buscarPorNombre(db, nombre);
+        } else if (op == 2) {
             cout << "Pais exacto: ";
-            string pais; getline(cin, pais); pais = trim(pais);
-            if (pais.empty()) { cout << "Pais vacío.\n"; continue; }
-            cout << "Total de oros para " << pais << ": " << totalOrosPais(d, pais) << "\n";
-        } else if (op == "3") {
-            auto idxs = indicesTopOro(d);
-            if (idxs.empty()) cout << "No hay registros.\n";
+            string pais; if (!getline(cin, pais)) return;
+            pais = trim(pais);
+            if (pais.empty()) { cout << "Pais vacio.\n"; continue; }
+            cout << "Total de ORO para " << pais << ": "
+                 << totalOroPorPais(db, pais) << "\n";
+        } else if (op == 3) {
+            atletasConMasOro(db);
+        } else if (op == 4) {
+            if (db.n == 0) cout << "Sin registros.\n";
             else {
-                cout << "Top oros:\n";
-                for (auto i : idxs) imprimirRegistro(d, i);
+                for (int i = 0; i < db.n; ++i) {
+                    cout << i+1 << ") " << db.nombres[i]
+                         << " | " << db.paises[i]
+                         << " | " << db.disciplinas[i]
+                         << " | " << db.generos[i]
+                         << " | ORO:" << db.oros[i] << "\n";
+                }
             }
-        } else if (op == "4") {
-            for (size_t i = 0; i < d.n; ++i) imprimirRegistro(d, i);
         } else {
-            cout << "Opción inválida.\n";
+            cout << "Opcion invalida.\n";
         }
     }
 }
 
+// ---------------------------------- Main --------------------------------------
 int main(int argc, char* argv[]) {
     ios::sync_with_stdio(false);
-    cin.tie(nullptr);
+    cin.tie(&cout);   // <-- clave: hace flush de cout antes de leer con cin
 
+    // 1) Ruta por argumento, si no la pide
     string path;
-    if (argc >= 2) path = argv[1];
-    else {
-        cout << "Ruta del CSV (ej. data/atletas.csv): ";
-        getline(cin, path);
+    if (argc >= 2) {
+        path = argv[1];
+    } else {
+        cout << "Ruta del CSV (ej. data/data1.csv): ";
+        if (!getline(cin, path)) {
+            cerr << "[ERROR] No se proporciono ruta.\n";
+            return 1;
+        }
         path = trim(path);
+        if (path.empty()) {
+            cerr << "[ERROR] No se proporciono ruta.\n";
+            return 1;
+        }
     }
-    if (path.empty()) { cerr << "No se proporcionó ruta.\n"; return 1; }
 
-    vector<string> warnings;
-    Data d;
-    if (!cargarCSV(path, d, warnings)) {
-        for (auto& w : warnings) cerr << "[AVISO] " << w << "\n";
-        cerr << "No se pudo cargar datos válidos.\n";
+    // 2) Cargar datos
+    DB db;
+    if (!cargarCSV(path, db)) {
+        cerr << "No se pudieron cargar datos validos desde \"" << path << "\".\n";
         return 2;
     }
-    for (auto& w : warnings) cerr << "[AVISO] " << w << "\n";
 
-    cout << "Registros cargados: " << d.n << "\n";
-    menu(d);
+    cout << "Archivo '" << path << "' cargado. Registros validos: " << db.n << "\n";
+
+    // 3) Menú
+    menu(db);
     return 0;
 }
